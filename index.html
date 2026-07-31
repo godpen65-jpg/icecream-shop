@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>류서현 아이스크림 가게</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#fdeef4;
+    --ink:#4a3040;
+    --line:#f2d5e1;
+    --point:#e8559a;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:'Jua',sans-serif;
+    display:flex;justify-content:center;
+    min-height:100vh;overflow-x:hidden;
+  }
+  #app{width:100%;max-width:460px;height:100vh;padding:16px;display:flex;flex-direction:column;overflow:hidden}
+  .screen{display:none;flex:1;min-height:0;flex-direction:column;align-items:center}
+  .screen.on{display:flex}
+
+  /* ---------- 시작 화면 ---------- */
+  #start{justify-content:center;text-align:center;gap:6px}
+  .signature{font-family:'Gaegu',cursive;font-size:26px;color:var(--point)}
+  .title{font-size:34px;margin:2px 0 10px;letter-spacing:-1px}
+  .drawing{width:min(40vw,158px);margin:0 auto}
+  .drawing img{width:100%;height:auto;display:block}
+  .drawing svg{width:100%;height:auto;aspect-ratio:108/228;display:block}
+  .btn-start{
+    margin-top:18px;font-family:'Jua',sans-serif;font-size:30px;color:#fff;
+    background:var(--point);border:none;border-radius:40px;
+    padding:16px 58px;cursor:pointer;
+    box-shadow:0 4px 0 #b93b78;
+    transition:transform .12s ease-out,box-shadow .12s ease-out;
+  }
+  .btn-start:active{transform:translateY(4px);box-shadow:0 0 0 #b93b78}
+
+  /* ---------- 모드 선택 ---------- */
+  #mode{justify-content:center;gap:18px;width:100%}
+  .mode-btn{
+    width:100%;font-family:'Jua',sans-serif;font-size:26px;color:var(--ink);
+    background:#fff;border:3px solid var(--line);border-radius:22px;
+    padding:26px 14px;cursor:pointer;line-height:1.5;
+    transition:border-color .12s ease-out;
+  }
+  .mode-btn:active{border-color:var(--point)}
+  .mode-btn small{display:block;font-size:16px;color:#8a6b7a;font-family:'Gaegu',cursive}
+
+  /* ---------- 게임 화면 ---------- */
+  .topbar{width:100%;display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:2px solid var(--line)}
+  .home{font-family:'Jua',sans-serif;font-size:17px;background:none;border:none;color:#8a6b7a;cursor:pointer;padding:6px}
+  .stars{font-size:20px;letter-spacing:2px}
+
+  .order{width:100%;display:flex;align-items:center;gap:10px;padding:12px 0;min-height:96px}
+  .customer{font-size:44px;line-height:1}
+  .bubble{
+    flex:1;background:#fff;border:2px solid var(--line);border-radius:16px;
+    padding:10px 12px;font-size:17px;
+  }
+  .bubble b{color:var(--point)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .chip{display:flex;align-items:center;gap:5px;font-size:16px;padding:3px 9px;border-radius:12px;background:#fae2ec}
+  .chip.done{opacity:.35;text-decoration:line-through}
+  .chip svg{width:20px;height:20px}
+  .topping svg{width:42px;height:42px}
+  .dot{width:14px;height:14px;border-radius:50%;display:inline-block;box-shadow:0 0 0 1px rgba(74,55,40,.2)}
+
+  .stage{flex:1;width:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:6px;min-height:110px;overflow:hidden}
+  #tower{display:flex;flex-direction:column;align-items:center;transform-origin:bottom center}
+  .stage.shake{animation:shake .3s ease-out}
+  @keyframes shake{25%{transform:translateX(-9px)}50%{transform:translateX(9px)}75%{transform:translateX(-5px)}100%{transform:none}}
+  #stack{display:flex;flex-direction:column-reverse;align-items:center}
+  .scoop{height:44px;border-radius:50% 50% 42% 42%;margin-bottom:-10px;animation:drop .22s ease-out;box-shadow:0 0 0 1.5px rgba(74,55,40,.18)}
+  .topping{font-size:34px;margin-bottom:-6px;animation:drop .22s ease-out}
+  @keyframes drop{from{transform:translateY(-46px);opacity:0}to{transform:none;opacity:1}}
+  .cone{
+    width:0;height:0;border-left:56px solid transparent;border-right:56px solid transparent;
+    border-top:126px solid #a9702f;margin-top:2px;
+  }
+  .msg{height:26px;font-size:21px;color:var(--point)}
+
+  .tray{width:100%;padding-top:10px;border-top:2px solid var(--line);flex-shrink:0}
+  .tray-tabs{display:flex;gap:8px;margin-bottom:8px}
+  .tab{
+    flex:1;font-family:'Jua',sans-serif;font-size:17px;padding:9px 0;cursor:pointer;
+    border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);
+    transition:background .12s ease-out;
+  }
+  .tab.on{background:var(--point);border-color:var(--point);color:#fff}
+  /* 작은 화면에서만 살짝 스크롤되도록 */
+  .tray-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:7px;max-height:36vh;overflow-y:auto}
+  .tray-grid[hidden]{display:none}
+  .pick{
+    aspect-ratio:1;border:none;border-radius:50%;cursor:pointer;padding:2px;
+    font-family:'Jua',sans-serif;font-size:11.5px;line-height:1.1;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45);
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .12s ease-out;
+  }
+  .pick:active{transform:scale(.92)}
+  .pick.light{color:var(--ink);text-shadow:none}
+  .pick.top{background:#fff;border:2px solid var(--line);color:var(--ink);text-shadow:none;font-size:22px}
+  .pick.top svg{width:26px;height:26px}
+  .again{font-family:'Jua',sans-serif;font-size:16px;background:none;border:2px solid var(--line);border-radius:14px;padding:5px 14px;color:var(--ink);cursor:pointer}
+  #end .again{margin-top:4px;font-size:18px;padding:8px 20px}
+
+  /* ---------- 끝 화면 ---------- */
+  #end{justify-content:center;text-align:center;gap:12px}
+  #end .big{font-size:44px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 시작 -->
+  <section id="start" class="screen on">
+    <div class="drawing">
+      <img src="아이스크림.png" alt="류서현이 그린 아이스크림" onerror="this.remove();document.getElementById('svgpic').style.display='block'">
+      <svg id="svgpic" viewBox="134 0 108 228" style="display:none">
+        <defs>
+          <filter id="crayon" x="-5%" y="-5%" width="110%" height="110%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="7" result="n"/>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+        </defs>
+
+        <g filter="url(#crayon)" stroke-linecap="round" stroke-linejoin="round">
+          <!-- 아이가 그린 가운데 아이스크림 -->
+          <g stroke="#4a3728" stroke-width="2" fill="none">
+            <path d="M142 128 L168 218 L200 128 Z" fill="#a9702f"/>
+            <path d="M148 145 l44 -8 M152 162 l38 -7 M158 180 l28 -5
+                     M156 133 l6 78 M170 130 l2 84 M184 129 l-6 76" stroke="#7d4f22" stroke-width="1.3"/>
+            <ellipse cx="171" cy="104" rx="31" ry="24" fill="#e8559a"/>
+            <ellipse cx="172" cy="72" rx="28" ry="22" fill="#3fb8e0"/>
+            <ellipse cx="175" cy="40" rx="22" ry="18" fill="#8f6fd0"/>
+            <path d="M158 30 q10 12 26 4 M160 44 q14 10 28 -6 M164 52 q10 -14 22 -6 M156 38 q12 -12 26 -2"
+                  stroke="#5b34a8" stroke-width="2" fill="none"/>
+            <circle cx="158" cy="100" r="3.2" fill="#8f6fd0"/><circle cx="182" cy="110" r="3.2" fill="#f2c14e"/>
+            <circle cx="170" cy="94" r="3.2" fill="#3fb8e0"/>
+            <circle cx="160" cy="68" r="3.2" fill="#3a9d4a"/><circle cx="184" cy="76" r="3.2" fill="#8f6fd0"/>
+            <circle cx="172" cy="62" r="3.2" fill="#e8559a"/>
+            <!-- 딸기 -->
+            <path d="M199 26 q4 -10 15 -10 q11 0 15 10 q2 18 -15 30 q-17 -12 -15 -30z" fill="#d62828"/>
+            <g fill="#ffe08a" stroke="none">
+              <ellipse cx="207" cy="30" rx="1.6" ry="2.4"/><ellipse cx="217" cy="28" rx="1.6" ry="2.4"/>
+              <ellipse cx="212" cy="38" rx="1.6" ry="2.4"/><ellipse cx="203" cy="40" rx="1.6" ry="2.4"/>
+              <ellipse cx="221" cy="39" rx="1.6" ry="2.4"/><ellipse cx="214" cy="48" rx="1.6" ry="2.4"/>
+            </g>
+            <path d="M200 22 l-6 -5 M207 18 l-3 -8 M214 16 v-9 M221 18 l4 -8 M228 22 l7 -5" stroke="#3a9d4a" stroke-width="2.4"/>
+            <path d="M202 20 q12 -6 24 0" stroke="#3a9d4a" stroke-width="2.4" fill="none"/>
+            <!-- 롤리폴리 (돌돌 말린 웨하스 과자) -->
+            <g stroke="#b98341" stroke-width="1.8">
+              <path d="M186 92 L226 62 L232 74 L192 104 Z" fill="#eccb96"/>
+              <path d="M191 96 L197 108 M199 90 L205 102 M207 84 L213 96 M215 78 L221 90 M223 72 L229 84"
+                    stroke="#c9903f" stroke-width="2"/>
+              <ellipse cx="189" cy="98" rx="3" ry="7" fill="#d9ae74" transform="rotate(-37 189 98)"/>
+            </g>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <p class="signature">류서현 작품</p>
+    <h1 class="title">아이스크림 가게</h1>
+    <button class="btn-start" onclick="go('mode')">START</button>
+    <div id="site-meta">💝 방문 <b><span id="visit-count">…</span></b>회 &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; 2026-07-31</div>
+  </section>
+
+  <!-- 모드 선택 -->
+  <section id="mode" class="screen">
+    <button class="mode-btn" onclick="startOrder()">🧒 손님 주문 받기<small>말한 순서대로 쌓아 주세요</small></button>
+    <button class="mode-btn" onclick="startFree()">🎨 자유롭게 만들기<small>마음대로 높이 쌓아요</small></button>
+  </section>
+
+  <!-- 게임 -->
+  <section id="game" class="screen">
+    <div class="topbar">
+      <button class="home" onclick="go('start')">← 처음으로</button>
+      <button class="again" id="again" onclick="reset()" style="display:none">다시 담기</button>
+      <div class="stars" id="stars"></div>
+    </div>
+    <div class="order" id="orderBox"></div>
+    <div class="stage" id="stage">
+      <div class="msg" id="msg"></div>
+      <div id="tower">
+        <div id="stack"></div>
+        <div class="cone"></div>
+      </div>
+    </div>
+    <div class="tray" id="tray"></div>
+  </section>
+
+  <!-- 끝 -->
+  <section id="end" class="screen">
+    <div class="big">🎉</div>
+    <h2 class="title" id="endText"></h2>
+    <div class="stars" id="endStars"></div>
+    <button class="btn-start" onclick="startOrder()">한 번 더</button>
+    <button class="again" onclick="go('start')">처음으로</button>
+  </section>
+</div>
+
+<script>
+const ITEMS = {
+  딸기:{color:'#f2569d'},   소다:{color:'#4bc0e8'},   포도:{color:'#8b5ad6'},
+  초코:{color:'#8b5a2b'},   멜론:{color:'#8bd15a'},   레몬:{color:'#ffd93b'},
+  바닐라:{color:'#f6e3b4'}, 민트:{color:'#74d7bd'},   블루베리:{color:'#5a6cd0'},
+  복숭아:{color:'#ffab8c'}, 말차:{color:'#79a03f'},   오렌지:{color:'#ff9433'},
+  수박:{color:'#f0605f'},   커피:{color:'#6a4636'},   요거트:{color:'#e9e3f2'},
+  캬라멜:{color:'#d99a45'}, 쿠키:{color:'#c9ab84'},   흑임자:{color:'#4c4a55'},
+  솜사탕:{color:'#f6a9e0'}, 청포도:{color:'#c6e05a'}, 라즈베리:{color:'#d6236b'},
+  망고:{color:'#ffab1f'},   팥:{color:'#8e5f6d'},     코코넛:{color:'#efe8dc'},
+
+  체리:{emoji:'🍒'},  생딸기:{emoji:'🍓'}, 과자:{emoji:'🍪'}, 별:{emoji:'⭐'},
+  초코바:{emoji:'🍫'},도넛:{emoji:'🍩'},   컵케익:{emoji:'🧁'},사탕:{emoji:'🍬'},
+  막대사탕:{emoji:'🍭'},무지개:{emoji:'🌈'},하트:{emoji:'💗'},바나나:{emoji:'🍌'},
+  베리:{emoji:'🫐'},  꽃:{emoji:'🌸'},     왕관:{emoji:'👑'}, 공룡:{emoji:'🦕'},
+  나비:{emoji:'🦋'},
+  // 롤리폴리는 딱 맞는 이모지가 없어서 직접 그림 (서현이 그림에 있던 그 과자)
+  롤리폴리:{emoji:'🧇', svg:
+    '<svg viewBox="0 0 40 40" width="34" height="34"><g transform="rotate(-35 20 20)">'+
+    '<rect x="3" y="15" width="34" height="10" rx="5" fill="#eccb96" stroke="#b98341" stroke-width="1.4"/>'+
+    '<path d="M9 15 l5 10 M15 15 l5 10 M21 15 l5 10 M27 15 l5 10" stroke="#c9903f" stroke-width="2" fill="none"/>'+
+    '<ellipse cx="4" cy="20" rx="1.8" ry="5" fill="#d9ae74" stroke="#b98341" stroke-width="1.2"/>'+
+    '</g></svg>'}
+};
+const 가나다 = (a,b) => a.localeCompare(b,'ko');
+const SCOOPS   = Object.keys(ITEMS).filter(k=>ITEMS[k].color).sort(가나다);
+const TOPPINGS = Object.keys(ITEMS).filter(k=>ITEMS[k].emoji).sort(가나다);
+const CUSTOMERS = ['🧒','👧','👦','🐻','🐰'];
+const TOTAL = 5, MAX = 10;   // MAX = 자유모드에서 쌓을 수 있는 총 개수
+
+let mode='free', stack=[], order=[], step=0, guest=0, stars=0;
+
+const $ = id => document.getElementById(id);
+function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); }
+
+function beep(freq, dur){
+  try{
+    const ac = window._ac || (window._ac = new (window.AudioContext||window.webkitAudioContext)());
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.value = freq; o.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(.12, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + dur);
+    o.start(); o.stop(ac.currentTime + dur);
+  }catch(e){}
+}
+
+function pick(arr, n){
+  const rest = arr.slice();
+  return Array.from({length:n}, () => rest.splice(Math.floor(Math.random()*rest.length),1)[0]);
+}
+
+/* ---------- 모드 시작 ---------- */
+function startFree(){
+  mode='free'; guest=0; stars=0; stack=[];
+  $('again').style.display=''; go('game'); drawTray(); render();
+}
+function startOrder(){
+  mode='order'; guest=0; stars=0;
+  $('again').style.display='none'; go('game'); drawTray(); nextGuest();
+}
+function nextGuest(){
+  if(guest >= TOTAL){ endGame(); return; }
+  const n = guest < 2 ? 2 : (guest < 4 ? 3 : 4);
+  order = pick(SCOOPS, n);
+  if(guest >= 2) order.push(pick(TOPPINGS,1)[0]);   // 3번째 손님부터 토핑 주문
+  step = 0; stack = []; guest++;
+  render();
+}
+
+/* ---------- 그리기 ---------- */
+// 밝은 색 위에는 흰 글씨가 안 보이므로 진한 글씨로
+function isLight(hex){
+  const n = parseInt(hex.slice(1),16);
+  return (((n>>16)&255)*299 + ((n>>8)&255)*587 + (n&255)*114)/1000 > 165;
+}
+
+function drawTray(){
+  const tray = $('tray');
+  tray.innerHTML='';
+  const tabs = document.createElement('div'); tabs.className='tray-tabs';
+  tray.appendChild(tabs);
+  const grids = [];
+
+  [['🍨 맛', SCOOPS], ['🍒 토핑', TOPPINGS]].forEach(([label, keys], n)=>{
+    const tab = document.createElement('button');
+    tab.className = 'tab' + (n===0 ? ' on' : '');
+    tab.textContent = label;
+    tab.onclick = () => {
+      tabs.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on', i===n));
+      grids.forEach((g,i)=>g.hidden = i!==n);
+    };
+    tabs.appendChild(tab);
+
+    const grid = document.createElement('div'); grid.className='tray-grid'; grid.hidden = n!==0;
+    keys.forEach(k=>{
+      const it = ITEMS[k], b = document.createElement('button');
+      b.className = 'pick' + (it.emoji ? ' top' : (isLight(it.color) ? ' light' : ''));
+      b.style.background = it.color || '';
+      if(it.svg) b.innerHTML = it.svg; else b.textContent = it.emoji || k;
+      b.onclick = () => tap(k);
+      grid.appendChild(b);
+    });
+    grids.push(grid); tray.appendChild(grid);
+  });
+}
+
+function render(){
+  $('stars').textContent = '⭐'.repeat(stars);
+  const box = $('orderBox');
+  if(mode === 'order'){
+    const chips = order.map((k,i) =>
+      `<span class="chip ${i<step?'done':''}">` +
+      (ITEMS[k].svg || ITEMS[k].emoji || `<i class="dot" style="background:${ITEMS[k].color}"></i>`) + k + '</span>'
+    ).join('');
+    box.innerHTML = `<div class="customer">${CUSTOMERS[guest-1]}</div>
+      <div class="bubble"><b>${guest}번째 손님</b> — 아래 순서대로 주세요!<div class="chips">${chips}</div></div>`;
+  }else{
+    box.innerHTML = `<div class="customer">🎨</div>
+      <div class="bubble">누르는 순서대로 쌓여요! 맛이든 토핑이든 ${MAX}개까지.</div>`;
+  }
+
+  const el = $('stack');
+  el.innerHTML='';
+  let scoopIdx = 0;
+  stack.forEach(k => {
+    const it = ITEMS[k], d = document.createElement('div');
+    if(it.emoji){ d.className='topping'; if(it.svg) d.innerHTML = it.svg; else d.textContent = it.emoji; }
+    else{
+      d.className='scoop';
+      d.style.width = (140 - scoopIdx*11) + 'px';
+      d.style.background = `radial-gradient(circle at 32% 38%, rgba(255,255,255,.55) 3px, transparent 4px),
+                            radial-gradient(circle at 68% 60%, rgba(0,0,0,.13) 3px, transparent 4px), ${it.color}`;
+      scoopIdx++;
+    }
+    el.appendChild(d);
+  });
+
+  // 높이 쌓으면 화면 밖으로 나가므로, 남는 높이에 맞춰 통째로 줄여서 보여주기
+  const tower = $('tower');
+  tower.style.transform = '';
+  const avail = $('stage').clientHeight - 30, h = tower.offsetHeight;
+  if(h > avail) tower.style.transform = 'scale(' + (avail/h).toFixed(3) + ')';
+}
+
+function shake(){ const s=$('stage'); s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake'); }
+function say(t){ $('msg').textContent = t; }
+
+/* ---------- 탭 ---------- */
+function tap(k){
+  if(mode === 'free'){   // 맛이든 토핑이든 누른 순서 그대로 쌓기
+    if(stack.length >= MAX){ say('꽉 찼어요!'); shake(); beep(220,.15); return; }
+    stack.push(k); say(''); beep(660,.09); render(); return;
+  }
+
+  // 주문 모드
+  if(step >= order.length) return;
+  if(k !== order[step]){ say('앗, 순서를 봐요'); shake(); beep(200,.18); return; }
+
+  stack.push(k); step++; say(''); beep(600 + step*90, .1); render();
+
+  if(step === order.length){
+    stars++; say('완성! 고마워요 🎉'); beep(880,.15);
+    setTimeout(()=>beep(1180,.2), 150);
+    render();
+    setTimeout(nextGuest, 1500);
+  }
+}
+
+function reset(){ stack=[]; say(''); render(); }
+
+function endGame(){
+  $('endText').textContent = '손님 5명 완성!';
+  $('endStars').textContent = '⭐'.repeat(stars);
+  go('end');
+}
+</script>
+<!-- VISITOR_VERSION_START -->
+<style>
+#site-meta{margin-top:16px;font-family:'Gaegu',cursive;font-size:13px;color:#a9899a;line-height:1.6}
+#site-meta b{color:var(--point);font-weight:normal}
+@media print{#site-meta{display:none !important}}
+</style>
+<script>
+(function(){
+  var el=document.getElementById('visit-count');
+  fetch("https://abacus.jasoncameron.dev/hit/godpen65-sites/icecream")
+    .then(function(r){return r.json();})
+    .then(function(d){ if(d&&typeof d.value!=='undefined'){el.textContent=Number(d.value).toLocaleString();} else {el.textContent='-';} })
+    .catch(function(){el.textContent='-';});
+})();
+</script>
+<!-- VISITOR_VERSION_END -->
+</body>
+</html>
