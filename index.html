@@ -68,6 +68,11 @@
   .chip{display:flex;align-items:center;gap:5px;font-size:16px;padding:3px 9px;border-radius:12px;background:#fae2ec}
   .chip.done{opacity:.35;text-decoration:line-through}
   .chip svg{width:20px;height:20px}
+  .acts{display:flex;gap:6px;margin-top:7px}
+  .btn-serve{
+    font-family:'Jua',sans-serif;font-size:16px;padding:5px 14px;cursor:pointer;
+    background:var(--point);border:2px solid var(--point);border-radius:14px;color:#fff;
+  }
   .topping svg{width:42px;height:42px}
   .dot{width:14px;height:14px;border-radius:50%;display:inline-block;box-shadow:0 0 0 1px rgba(74,55,40,.2)}
 
@@ -167,7 +172,7 @@
     <p class="signature">류서현 작품</p>
     <h1 class="title">아이스크림 가게</h1>
     <button class="btn-start" onclick="go('mode')">START</button>
-    <div id="site-meta">💝 방문 <b><span id="visit-count">…</span></b>회 &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; 2026-07-31</div>
+    <div id="site-meta">💝 방문 <b><span id="visit-count">…</span></b>회 &nbsp;·&nbsp; v1.1 &nbsp;·&nbsp; 2026-07-31</div>
   </section>
 
   <!-- 모드 선택 -->
@@ -180,7 +185,6 @@
   <section id="game" class="screen">
     <div class="topbar">
       <button class="home" onclick="go('start')">← 처음으로</button>
-      <button class="again" id="again" onclick="reset()" style="display:none">다시 담기</button>
       <div class="stars" id="stars"></div>
     </div>
     <div class="order" id="orderBox"></div>
@@ -234,7 +238,7 @@ const TOPPINGS = Object.keys(ITEMS).filter(k=>ITEMS[k].emoji).sort(가나다);
 const CUSTOMERS = ['🧒','👧','👦','🐻','🐰'];
 const TOTAL = 5, MAX = 10;   // MAX = 자유모드에서 쌓을 수 있는 총 개수
 
-let mode='free', stack=[], order=[], step=0, guest=0, stars=0;
+let mode='free', stack=[], order=[], step=0, guest=0, stars=0, verdict=null;
 
 const $ = id => document.getElementById(id);
 function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); }
@@ -257,12 +261,12 @@ function pick(arr, n){
 
 /* ---------- 모드 시작 ---------- */
 function startFree(){
-  mode='free'; guest=0; stars=0; stack=[];
-  $('again').style.display=''; go('game'); drawTray(); render();
+  mode='free'; guest=0; stars=0; stack=[]; verdict=null;
+  go('game'); drawTray(); render();
 }
 function startOrder(){
-  mode='order'; guest=0; stars=0;
-  $('again').style.display='none'; go('game'); drawTray(); nextGuest();
+  mode='order'; guest=0; stars=0; verdict=null;
+  go('game'); drawTray(); nextGuest();
 }
 function nextGuest(){
   if(guest >= TOTAL){ endGame(); return; }
@@ -320,9 +324,17 @@ function render(){
     ).join('');
     box.innerHTML = `<div class="customer">${CUSTOMERS[guest-1]}</div>
       <div class="bubble"><b>${guest}번째 손님</b> — 아래 순서대로 주세요!<div class="chips">${chips}</div></div>`;
+  }else if(verdict){
+    box.innerHTML = `<div class="customer">${verdict.face}</div>
+      <div class="bubble"><b>${verdict.title}</b> ${verdict.why}
+        <div class="acts"><button class="btn-serve" onclick="reset()">또 만들기</button></div></div>`;
   }else{
     box.innerHTML = `<div class="customer">🎨</div>
-      <div class="bubble">누르는 순서대로 쌓여요! 맛이든 토핑이든 ${MAX}개까지.</div>`;
+      <div class="bubble">누르는 순서대로 쌓여요! (${MAX}개까지)
+        <div class="acts">
+          <button class="btn-serve" onclick="serve()">손님에게 주기</button>
+          <button class="again" onclick="reset()">다시 담기</button>
+        </div></div>`;
   }
 
   const el = $('stack');
@@ -354,6 +366,7 @@ function say(t){ $('msg').textContent = t; }
 /* ---------- 탭 ---------- */
 function tap(k){
   if(mode === 'free'){   // 맛이든 토핑이든 누른 순서 그대로 쌓기
+    if(verdict){ verdict=null; stack=[]; }        // 손님이 먹고 나면 새로 시작
     if(stack.length >= MAX){ say('꽉 찼어요!'); shake(); beep(220,.15); return; }
     stack.push(k); say(''); beep(660,.09); render(); return;
   }
@@ -372,7 +385,35 @@ function tap(k){
   }
 }
 
-function reset(){ stack=[]; say(''); render(); }
+function reset(){ stack=[]; verdict=null; say(''); render(); }
+
+/* ---------- 자유모드: 손님이 먹어보고 표정 짓기 ---------- */
+// 아이스크림다우려면 ① 아이스크림이 2개 이상 ② 콘 바로 위는 아이스크림 ③ 토핑이 아이스크림보다 적을 것
+function judge(){
+  const scoops = stack.filter(k => !ITEMS[k].emoji).length;
+  const tops   = stack.length - scoops;
+  const bottomIsScoop = !ITEMS[stack[0]].emoji;
+  const ok = [scoops >= 2, bottomIsScoop, tops < scoops];
+  const good = ok.filter(Boolean).length;
+
+  if(good === 3) return {face:'😋', title:'우와, 최고예요!', why:'딱 아이스크림 맛이에요!'};
+  if(good === 2) return {face:'🙂', title:'맛있어요!',
+    why: !ok[0] ? '아이스크림이 한 개만 더 있으면 좋겠어요.'
+       : !ok[1] ? '콘 위에는 아이스크림이 먼저면 더 좋아요.'
+       :          '토핑이 조금 많아요.'};
+  return {face:'😖', title:'으엑, 이상해요!',
+    why: scoops === 0   ? '아이스크림이 하나도 없어요!'
+       : !bottomIsScoop ? '콘 위에 토핑만 있으면 다 흘러내려요!'
+       :                  '토핑이 아이스크림보다 많아요!'};
+}
+
+function serve(){
+  if(!stack.length){ say('아직 아무것도 없어요!'); shake(); beep(220,.15); return; }
+  verdict = judge(); say('');
+  if(verdict.face === '😖'){ beep(300,.18); setTimeout(()=>beep(200,.25), 170); }
+  else { beep(760,.13); setTimeout(()=>beep(1020,.2), 150); }
+  render();
+}
 
 function endGame(){
   $('endText').textContent = '손님 5명 완성!';
